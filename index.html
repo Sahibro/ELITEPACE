@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ElitePace – Premium Presentation Timer for Speakers & Event Managers"/>
+  <meta property="og:title" content="ElitePace – Smart Presentation Timer"/>
+  <meta property="og:description" content="Control speaker time with elegance. No login. Instant sync."/>
+  <meta property="og:type" content="website"/>
+  <title>ElitePace – Smart Presentation Timer</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- QRCode Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css"/>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#0a0a0f"/>
+</head>
+<body>
+
+  <!-- ============ LOADING SCREEN ============ -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-logo">
+      <div class="logo-icon">
+        <i class="fas fa-timer"></i>
+      </div>
+      <h1 class="loading-brand">ElitePace</h1>
+      <div class="loading-bar-wrap">
+        <div class="loading-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APP WRAPPER ============ -->
+  <div id="app" class="app hidden">
+
+    <!-- ============ HOME VIEW ============ -->
+    <section id="homeView" class="view">
+      <nav class="navbar">
+        <div class="nav-brand">
+          <i class="fas fa-timer"></i>
+          <span>ElitePace</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+          <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+      </nav>
+
+      <div class="home-container">
+        <div class="home-hero">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            No Login Required · Instant Setup
+          </div>
+          <h1 class="hero-title">
+            Your Presentations,<br/>
+            <span class="gradient-text">Perfectly Paced.</span>
+          </h1>
+          <p class="hero-subtitle">
+            Create a session in one click. Share with your speaker. Control time like a pro — with elegant color-psychology cues.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn-primary pulse-btn" id="createSessionBtn">
+              <i class="fas fa-plus-circle"></i>
+              Create New Session
+            </button>
+            <button class="btn-ghost" id="joinSessionBtn">
+              <i class="fas fa-link"></i>
+              Join Existing Room
+            </button>
+          </div>
+
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-num" id="statRooms">0</span>
+              <span class="stat-label">Sessions Today</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-num">∞</span>
+              <span class="stat-label">Free Forever</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-num">0</span>
+              <span class="stat-label">Seconds Setup</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-features">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+            <h3>Instant Room</h3>
+            <p>One click creates a unique room. No sign-up. No friction.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-palette"></i></div>
+            <h3>Color Psychology</h3>
+            <p>Ambient color cues guide speakers naturally without stress.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-wifi"></i></div>
+            <h3>Auto-Sync</h3>
+            <p>Drops Wi-Fi? Timer keeps running and re-syncs automatically.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
+            <h3>No Sleep Mode</h3>
+            <p>Keeps speaker's device awake throughout the entire session.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join Room Modal -->
+      <div id="joinModal" class="modal-overlay hidden">
+        <div class="modal-box">
+          <button class="modal-close" id="closeJoinModal">
+            <i class="fas fa-times"></i>
+          </button>
+          <h2><i class="fas fa-link"></i> Join a Room</h2>
+          <p>Enter the Room ID shared by your manager</p>
+          <div class="modal-input-group">
+            <input type="text" id="joinRoomIdInput" placeholder="Enter Room ID (e.g. A3X9K2)"
+              maxlength="8" autocomplete="off" spellcheck="false"/>
+            <button class="btn-primary" id="joinRoomBtn">
+              <i class="fas fa-sign-in-alt"></i> Join
+            </button>
+          </div>
+          <p class="modal-hint">Or open the Speaker link shared by your manager</p>
+        </div>
+      </div>
+
+      <footer class="home-footer">
+        <p>ElitePace © 2025 · Built for Event Managers & Speakers · 
+          <span class="footer-link" onclick="showToast('Pro version coming soon! 🚀', 'info')">Go Pro</span>
+        </p>
+      </footer>
+    </section>
+
+    <!-- ============ MANAGER VIEW ============ -->
+    <section id="managerView" class="view hidden">
+      <nav class="navbar manager-nav">
+        <div class="nav-brand" onclick="goHome()" style="cursor:pointer">
+          <i class="fas fa-timer"></i>
+          <span>ElitePace</span>
+        </div>
+        <div class="nav-room-badge">
+          <span class="room-label">Room</span>
+          <span class="room-id" id="managerRoomId">------</span>
+        </div>
+        <div class="nav-actions">
+          <div class="connection-dot" id="connectionDot" title="Connection Status"></div>
+          <button class="btn-icon" id="shareRoomBtn" title="Share Room">
+            <i class="fas fa-share-alt"></i>
+          </button>
+          <button class="btn-icon danger" id="endSessionBtn" title="End Session">
+            <i class="fas fa-stop-circle"></i>
+          </button>
+        </div>
+      </nav>
+
+      <div class="manager-container">
+        <!-- Left Panel -->
+        <div class="manager-panel">
+
+          <!-- Timer Setup -->
+          <div class="card timer-setup-card">
+            <h3 class="card-title">
+              <i class="fas fa-clock"></i> Timer Setup
+            </h3>
+            <div class="time-inputs">
+              <div class="time-input-group">
+                <label>Minutes</label>
+                <input type="number" id="timerMinutes" value="15"
+                  min="1" max="180" placeholder="15"/>
+              </div>
+              <div class="time-separator">:</div>
+              <div class="time-input-group">
+                <label>Seconds</label>
+                <input type="number" id="timerSeconds" value="0"
+                  min="0" max="59" placeholder="00"/>
+              </div>
+            </div>
+            <button class="btn-secondary full-width" id="setTimerBtn">
+              <i class="fas fa-check"></i> Set Timer
+            </button>
+          </div>
+
+          <!-- Timer Display (Manager) -->
+          <div class="card timer-display-card" id="managerTimerCard">
+            <div class="manager-timer-display" id="managerTimerDisplay">
+              00:00
+            </div>
+            <div class="timer-status" id="timerStatus">Ready to Start</div>
+
+            <!-- Main Controls -->
+            <div class="main-controls">
+              <button class="ctrl-btn ctrl-start" id="startBtn" title="Start">
+                <i class="fas fa-play"></i>
+              </button>
+              <button class="ctrl-btn ctrl-pause" id="pauseBtn" title="Pause" disabled>
+                <i class="fas fa-pause"></i>
+              </button>
+              <button class="ctrl-btn ctrl-reset" id="resetBtn" title="Reset">
+                <i class="fas fa-redo"></i>
+              </button>
+            </div>
+
+            <!-- Quick Adjust -->
+            <div class="quick-adjust">
+              <button class="adj-btn" id="minus5Btn">-5m</button>
+              <button class="adj-btn" id="minus1Btn">-1m</button>
+              <button class="adj-btn" id="plus1Btn">+1m</button>
+              <button class="adj-btn" id="plus5Btn">+5m</button>
+            </div>
+          </div>
+
+          <!-- QR Code Share -->
+          <div class="card share-card">
+            <h3 class="card-title">
+              <i class="fas fa-qrcode"></i> Share with Speaker
+            </h3>
+            <div id="qrCodeContainer" class="qr-container"></div>
+            <div class="share-url-box">
+              <span id="speakerUrlDisplay" class="share-url-text">--</span>
+              <button class="copy-btn" id="copyUrlBtn" title="Copy Link">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <div class="share-buttons">
+              <button class="btn-share whatsapp" id="whatsappShareBtn">
+                <i class="fab fa-whatsapp"></i> WhatsApp
+              </button>
+              <button class="btn-share email" id="emailShareBtn">
+                <i class="fas fa-envelope"></i> Email
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Panel -->
+        <div class="manager-panel">
+
+          <!-- Stealth Message -->
+          <div class="card message-card">
+            <h3 class="card-title">
+              <i class="fas fa-paper-plane"></i> Stealth Message to Speaker
+            </h3>
+            <p class="card-hint">Speaker sees this silently on their screen</p>
+            <textarea id="messageInput"
+              placeholder="e.g. Please wrap up... or Great pace, keep going!"
+              rows="3" maxlength="150"></textarea>
+            <div class="message-actions">
+              <span class="char-counter"><span id="charCount">0</span>/150</span>
+              <div class="msg-btn-group">
+                <button class="btn-ghost-sm" id="clearMsgBtn">
+                  <i class="fas fa-times"></i> Clear
+                </button>
+                <button class="btn-primary-sm" id="sendMessageBtn">
+                  <i class="fas fa-paper-plane"></i> Send
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Messages -->
+            <div class="quick-messages">
+              <span class="quick-label">Quick:</span>
+              <button class="quick-msg-btn" data-msg="Please wrap up!">Wrap up</button>
+              <button class="quick-msg-btn" data-msg="Great pace! Keep going.">Great pace</button>
+              <button class="quick-msg-btn" data-msg="Slow down a bit.">Slow down</button>
+              <button class="quick-msg-btn" data-msg="Speed up please!">Speed up</button>
+            </div>
+          </div>
+
+          <!-- AI Tone Polish (Teaser) -->
+          <div class="card ai-teaser-card">
+            <div class="ai-teaser-header">
+              <div class="ai-badge">
+                <i class="fas fa-sparkles"></i> PRO
+              </div>
+              <h3 class="card-title">AI Tone Polish</h3>
+            </div>
+            <p class="card-hint">
+              Let AI craft perfectly-toned messages based on speaker's pacing behavior
+            </p>
+            <button class="btn-ai-teaser" id="aiTeaserBtn">
+              <i class="fas fa-wand-magic-sparkles"></i>
+              Polish Message with AI
+            </button>
+          </div>
+
+          <!-- Session Analytics -->
+          <div class="card analytics-card">
+            <h3 class="card-title">
+              <i class="fas fa-chart-line"></i> Session Analytics
+            </h3>
+            <div class="analytics-grid">
+              <div class="analytics-item">
+                <span class="analytics-val" id="statDuration">00:00</span>
+                <span class="analytics-label">Total Duration</span>
+              </div>
+              <div class="analytics-item">
+                <span class="analytics-val" id="statMessages">0</span>
+                <span class="analytics-label">Messages Sent</span>
+              </div>
+              <div class="analytics-item">
+                <span class="analytics-val" id="statPauses">0</span>
+                <span class="analytics-label">Pauses</span>
+              </div>
+              <div class="analytics-item">
+                <span class="analytics-val" id="statAdjusts">0</span>
+                <span class="analytics-label">Adjustments</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speaker Preview -->
+          <div class="card preview-card">
+            <h3 class="card-title">
+              <i class="fas fa-eye"></i> Speaker Screen Preview
+            </h3>
+            <div class="speaker-preview" id="speakerPreview">
+              <div class="preview-timer" id="previewTimer">00:00</div>
+              <div class="preview-message" id="previewMessage"></div>
+            </div>
+            <div class="color-legend">
+              <span class="legend-item"><span class="dot dark"></span>Normal</span>
+              <span class="legend-item"><span class="dot gold"></span>Last 2 min</span>
+              <span class="legend-item"><span class="dot red"></span>Time Up</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- End Session Modal -->
+      <div id="endSessionModal" class="modal-overlay hidden">
+        <div class="modal-box">
+          <div class="modal-icon warning">
+            <i class="fas fa-stop-circle"></i>
+          </div>
+          <h2>End Session?</h2>
+          <p>This will close the room for all participants.</p>
+          <div class="feedback-section">
+            <label>Quick Feedback (Optional)</label>
+            <textarea id="endFeedback"
+              placeholder="Did ElitePace help? What feature do you want next?"
+              rows="3"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="cancelEndBtn">Cancel</button>
+            <button class="btn-danger" id="confirmEndBtn">
+              <i class="fas fa-stop-circle"></i> End Session
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ SPEAKER VIEW ============ -->
+    <section id="speakerView" class="view hidden speaker-view">
+      <div class="speaker-container" id="speakerContainer">
+
+        <!-- Connection Status -->
+        <div class="speaker-status-bar" id="speakerStatusBar">
+          <span id="speakerStatusText">
+            <i class="fas fa-circle"></i> Connecting...
+          </span>
+          <span class="room-badge-speaker" id="speakerRoomBadge">Room: ------</span>
+        </div>
+
+        <!-- Main Timer Display -->
+        <div class="speaker-timer-wrap">
+          <div class="speaker-timer-label" id="speakerLabel">PRESENTATION TIME</div>
+          <div class="speaker-timer-display" id="speakerTimerDisplay">
+            --:--
+          </div>
+          <div class="speaker-progress-bar">
+            <div class="speaker-progress-fill" id="speakerProgressFill"></div>
+          </div>
+        </div>
+
+        <!-- Speaker Message -->
+        <div class="speaker-message-wrap" id="speakerMessageWrap">
+          <div class="speaker-message" id="speakerMessage"></div>
+        </div>
+
+        <!-- Waiting State -->
+        <div class="speaker-waiting" id="speakerWaiting">
+          <div class="waiting-icon">
+            <i class="fas fa-hourglass-start"></i>
+          </div>
+          <h2>Waiting for Manager</h2>
+          <p>Your manager will start the timer shortly</p>
+          <div class="waiting-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Time Up State -->
+        <div class="time-up-overlay hidden" id="timeUpOverlay">
+          <div class="time-up-content">
+            <div class="time-up-icon">⏰</div>
+            <h1>TIME UP</h1>
+            <p>Please wrap up your presentation</p>
+          </div>
+        </div>
+
+        <!-- Brand Watermark -->
+        <div class="speaker-brand">
+          <i class="fas fa-timer"></i> ElitePace
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ SESSION ENDED VIEW ============ -->
+    <section id="endedView" class="view hidden">
+      <div class="ended-container">
+        <div class="ended-icon">🎉</div>
+        <h1>Session Complete!</h1>
+        <p>Great presentation! Session has ended successfully.</p>
+
+        <div class="feedback-form-wrap">
+          <h3>Quick Feedback</h3>
+          <p>Help us improve ElitePace</p>
+          <div class="rating-stars" id="ratingStars">
+            <span class="star" data-rating="1">⭐</span>
+            <span class="star" data-rating="2">⭐</span>
+            <span class="star" data-rating="3">⭐</span>
+            <span class="star" data-rating="4">⭐</span>
+            <span class="star" data-rating="5">⭐</span>
+          </div>
+          <textarea id="feedbackText" placeholder="What feature do you want next?" rows="3"></textarea>
+          <button class="btn-primary full-width" id="submitFeedbackBtn">
+            <i class="fas fa-paper-plane"></i> Submit Feedback
+          </button>
+        </div>
+
+        <button class="btn-ghost full-width" onclick="goHome()" style="margin-top:1rem">
+          <i class="fas fa-plus"></i> Create New Session
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Firebase Config & App Script -->
+  <script src="firebase-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
